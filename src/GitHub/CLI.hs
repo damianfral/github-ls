@@ -31,7 +31,12 @@ instance ParseRecord Access
 
 --------------------------------------------------------------------------------
 
-data Display = Name | URL deriving (Show, Read, Typeable, Generic)
+data Display
+  = Name
+  | URL
+  | SSH
+  | Git
+  deriving (Show, Read, Typeable, Generic)
 
 instance ParseField Display where
   readField = do
@@ -39,6 +44,8 @@ instance ParseField Display where
     case toLower $ pack str of
       "name" -> pure Name
       "url" -> pure URL
+      "ssh" -> pure SSH
+      "git" -> pure Git
       _ -> fail "could not parse Display"
 
 instance ParseRecord Display
@@ -78,10 +85,12 @@ listAllRepos auth =
 
 --------------------------------------------------------------------------------
 
+unURL (G.URL u) = u
+
 displayRepo :: Display -> G.Repo -> Text
 displayRepo URL = unURL . G.repoHtmlUrl
-  where
-    unURL (G.URL u) = u
+displayRepo Git = maybe "" unURL . G.repoGitUrl
+displayRepo SSH = maybe "" unURL . G.repoSshUrl
 displayRepo _ =
   mconcat
     [ G.untagName . G.simpleOwnerLogin . G.repoOwner,
