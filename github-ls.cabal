@@ -1,0 +1,57 @@
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.34.7.
+--
+-- see: https://github.com/sol/hpack
+
+name:           github-ls
+version:        0.0.0.0
+build-type:     Simple
+
+library
+  exposed-modules:
+      GitHub.CLI
+      Main
+  other-modules:
+      Paths_github_ls
+  hs-source-dirs:
+      ./src/
+  build-depends:
+      aeson
+    , base
+    , bytestring
+    , github
+    , lens
+    , optparse-applicative
+    , optparse-generic
+    , relude
+    , text
+    , time
+    , transformers
+    , turtle
+    , vector
+  default-language: Haskell2010
+
+executable github-ls
+  main-is: Main.hs
+  other-modules:
+      GitHub.CLI
+      Paths_github_ls
+  hs-source-dirs:
+      ./src/
+  ghc-options: -rtsopts -threaded -with-rtsopts=-N
+  build-depends:
+      aeson
+    , base
+    , bytestring
+    , github
+    , lens
+    , optparse-applicative
+    , optparse-generic
+    , relude
+    , text
+    , time
+    , transformers
+    , turtle
+    , vector
+  default-language: Haskell2010
