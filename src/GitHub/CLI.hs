@@ -48,7 +48,8 @@ instance ParseRecord Display
 data Options = Options
   { org :: Maybe Text,
     access :: Maybe Access,
-    display :: Maybe Display
+    display :: Maybe Display,
+    lang :: Maybe Text
   }
   deriving (Show, Read, Typeable, Generic)
 
@@ -102,7 +103,8 @@ runOptions options auth = do
       mconcat $
         catMaybes
           [ byOrg <$> org options,
-            byAccess <$> access options
+            byAccess <$> access options,
+            byLang <$> lang options
           ]
 
 byOrg :: Text -> G.Repo -> All
