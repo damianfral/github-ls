@@ -38,6 +38,8 @@
                 haskell-language-server
                 cabal-install
                 ghcid
+                hpack
+                yamlfix
                 implicit-hie
               ];
             };
