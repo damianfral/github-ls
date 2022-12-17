@@ -1,6 +1,7 @@
 module Main where
 
+import GitHub.CLI
 import Prelude
 
 main :: IO ()
-main = putStrLn "ghh-cli"
+main = runCLI
