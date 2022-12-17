@@ -1,3 +1,4 @@
+---
 name: github-ls
 version: 0.0.0.0
 
@@ -5,19 +6,19 @@ license: MIT
 license-file: LICENSE
 
 dependencies:
-- aeson
-- base
-- bytestring
-- github
-- lens
-- optparse-applicative
-- optparse-generic
-- relude
-- text
-- time
-- transformers
-- turtle
-- vector
+  - aeson
+  - base
+  - bytestring
+  - github
+  - lens
+  - optparse-applicative
+  - optparse-generic
+  - relude
+  - text
+  - time
+  - transformers
+  - turtle
+  - vector
 
 library:
   source-dirs: ./src/
@@ -27,6 +28,6 @@ executables:
     main: Main.hs
     source-dirs: ./src/
     ghc-options:
-    - -rtsopts
-    - -threaded
-    - -with-rtsopts=-N
+      - -rtsopts
+      - -threaded
+      - -with-rtsopts=-N
