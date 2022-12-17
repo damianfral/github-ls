@@ -27,7 +27,15 @@
         in
         rec {
           packages = rec {
-            github-ls = haskellPackages.github-ls;
+            github-ls = haskellPackages.github-ls.overrideAttrs
+              (oldAttrs:
+                {
+                  nativeBuildInputs = oldAttrs.nativeBuildInputs ++ [ pkgs.makeWrapper ];
+                  postInstall = ''
+                    wrapProgram $out/bin/github-ls --suffix PATH : ${pkgs.lib.makeBinPath [ pkgs.github-cli ]}
+                  '';
+                }
+              );
           };
 
           defaultPackage = packages.github-ls;
