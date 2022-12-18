@@ -6,17 +6,13 @@ license: MIT
 license-file: LICENSE
 
 dependencies:
-  - aeson
   - base
   - bytestring
   - github
-  - lens
   - optparse-applicative
   - optparse-generic
   - relude
   - text
-  - time
-  - transformers
   - turtle
   - vector
 
