@@ -1,6 +1,8 @@
+{-# LANGUAGE DataKinds #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 
 module GitHub.CLI where
@@ -52,13 +54,33 @@ instance ParseRecord Display
 
 --------------------------------------------------------------------------------
 
-data Options = Options
-  { org :: Maybe Text,
-    access :: Maybe Access,
-    display :: Maybe Display,
-    lang :: Maybe Text
-  }
+newtype Organization = Organization Text
   deriving (Show, Read, Typeable, Generic)
+
+instance ParseField Organization
+
+newtype Language = Language Text
+  deriving (Show, Read, Typeable, Generic)
+
+instance ParseField Language
+
+--------------------------------------------------------------------------------
+
+data Options = Options
+  { org ::
+      Maybe Organization
+        <?> "Print only repos owned by this organization",
+    access ::
+      Maybe Access
+        <?> "Print only repos with this access (public|private)",
+    display ::
+      Maybe Display
+        <?> "Print field (name|url|ssh|git)",
+    lang ::
+      Maybe Language
+        <?> "Print only repos matching this language"
+  }
+  deriving (Show, Typeable, Generic)
 
 instance ParseRecord Options
 
@@ -100,24 +122,29 @@ displayRepo _ =
 
 --------------------------------------------------------------------------------
 
+runOptions :: Options -> G.Auth -> IO ()
 runOptions options auth = do
   listAllRepos auth >>= \case
     Left e -> log $ show e
     Right repos -> do
       let filteredRepos = V.filter (getAll . filters) repos
-      let render = displayRepo (fromMaybe Name $ display options)
+      let render = displayRepo $ fromMaybe Name displayValue
       mapM_ (T.putStrLn . render) filteredRepos
   where
     filters =
       mconcat $
         catMaybes
-          [ byOrg <$> org options,
-            byAccess <$> access options,
-            byLang <$> lang options
+          [ byOrg <$> orgValue,
+            byAccess <$> accessValue,
+            byLang <$> langValue
           ]
+    orgValue = unHelpful $ org options
+    displayValue = unHelpful $ display options
+    accessValue = unHelpful $ access options
+    langValue = unHelpful $ lang options
 
-byOrg :: Text -> G.Repo -> All
-byOrg o repo = All $ ((==) `on` toLower) repoOwnerText o
+byOrg :: Organization -> G.Repo -> All
+byOrg (Organization o) repo = All $ ((==) `on` toLower) repoOwnerText o
   where
     repoOwnerText = G.untagName $ G.simpleOwnerLogin $ G.repoOwner repo
 
@@ -125,14 +152,14 @@ byAccess :: Access -> G.Repo -> All
 byAccess Private repo = All $ G.repoPrivate repo
 byAccess Public repo = All $ not $ G.repoPrivate repo
 
-byLang :: Text -> G.Repo -> All
-byLang languageText repo = All $ Just fLanguage == rLanguage
+byLang :: Language -> G.Repo -> All
+byLang (Language languageText) repo = All $ Just fLanguage == rLanguage
   where
     fLanguage = toLower languageText
     rLanguage = toLower . G.getLanguage <$> G.repoLanguage repo
 
 runCLI = do
-  options <- getRecord "github-ls - List and filter your github repositories"
+  options <- getRecord "github-ls - List your github repositories"
   getAuthToken >>= \case
     Nothing -> log "No auth"
     Just auth -> runOptions options auth
