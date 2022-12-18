@@ -90,13 +90,14 @@ log = T.hPutStrLn stderr
 
 --------------------------------------------------------------------------------
 
+login :: IO ()
+login = void $ Turtle.procStrict "gh" ["auth", "login"] Turtle.empty
+
 getAuthToken :: IO (Maybe G.Auth)
 getAuthToken = do
   (exitCode, output) <- Turtle.procStrict "gh" ["auth", "token"] Turtle.empty
   case exitCode of
-    Turtle.ExitFailure _ -> do
-      log "Please run \"gh auth login\" to authenticate against Github"
-      pure Nothing
+    Turtle.ExitFailure _ -> pure Nothing
     Turtle.ExitSuccess -> do
       let token = replace "\n" "" output
       pure $ Just $ G.OAuth $ encodeUtf8 token
@@ -162,6 +163,7 @@ byLang (Language languageText) repo = All $ Just fLanguage == rLanguage
 
 runCLI = do
   options <- getRecord "github-ls - List your github repositories"
-  getAuthToken >>= \case
+  token <- runMaybeT $ MaybeT getAuthToken <|> MaybeT (login >> getAuthToken)
+  case token of
     Nothing -> log "No auth"
     Just auth -> runOptions options auth
