@@ -18,9 +18,9 @@ import Test.Syd
 import Test.Syd.Validity
 
 instance Eq Options where
-  (Options a b c d) == (Options w x y z) =
-    (unHelpful a, unHelpful b, unHelpful c, unHelpful d)
-      == (unHelpful w, unHelpful x, unHelpful y, unHelpful z)
+  (Options a b c d e) == (Options w x y z zz) =
+    (unHelpful a, unHelpful b, unHelpful c, unHelpful d, unHelpful e)
+      == (unHelpful w, unHelpful x, unHelpful y, unHelpful z, unHelpful zz)
 
 instance Validity Access
 
@@ -41,13 +41,14 @@ instance GenValid Language
 spec :: Spec
 spec =
   it "decodes valid options" $ do
-    forAllValid $ \(org, access, lang, display) -> do
+    forAllValid $ \(org, access, lang, display, archived) -> do
       let options =
             Options
               { org = Helpful $ Just org,
                 access = Helpful $ Just access,
                 lang = Helpful $ Just lang,
-                display = Helpful $ Just display
+                display = Helpful $ Just display,
+                archived = Helpful archived
               }
       let record =
             [ "--display",
@@ -59,4 +60,6 @@ spec =
               "--access",
               toLower (show access)
             ]
+              <> ["--archived" | archived]
+      --
       getRecordPure record `shouldBe` Just options
