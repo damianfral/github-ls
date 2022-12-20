@@ -33,13 +33,13 @@ tests:
     main: Spec.hs
     source-dirs: test
     ghc-options:
-    - -threaded
+      - -threaded
     dependencies:
-    - genvalidity
-    - genvalidity-sydtest
-    - genvalidity-text
-    - github-ls
-    - QuickCheck
-    - sydtest
-    - sydtest-discover
-    - validity
+      - genvalidity
+      - genvalidity-sydtest
+      - genvalidity-text
+      - github-ls
+      - QuickCheck
+      - sydtest
+      - sydtest-discover
+      - validity
