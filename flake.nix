@@ -4,30 +4,29 @@
   inputs = {
     nixpkgs = { url = "github:NixOS/nixpkgs/"; };
     flake-utils = { url = "github:numtide/flake-utils"; };
+    safe-coloured-text.url = "github:NorfairKing/safe-coloured-text?ref=flake";
   };
 
-  outputs = { self, nixpkgs, flake-utils, ... }:
+  outputs = { self, nixpkgs, flake-utils, safe-coloured-text, ... }@inputs:
 
     let
       pkgsFor = system: import nixpkgs {
         inherit system;
-        overlays = [ ];
+        overlays = [
+          self.overlays.${system}
+          safe-coloured-text.overlays.${system}
+        ];
       };
     in
 
     flake-utils.lib.eachDefaultSystem
       (system:
-
         let
           pkgs = pkgsFor system;
-          haskellPackages = pkgs.haskellPackages.extend
-            (pkgs.haskell.lib.compose.packageSourceOverrides {
-              github-ls = ./.;
-            });
         in
         rec {
-          packages = rec {
-            github-ls = haskellPackages.github-ls.overrideAttrs
+          packages = {
+            github-ls = pkgs.haskellPackages.github-ls.overrideAttrs
               (oldAttrs:
                 {
                   nativeBuildInputs = oldAttrs.nativeBuildInputs ++ [ pkgs.makeWrapper ];
@@ -39,10 +38,10 @@
           };
 
           defaultPackage = packages.github-ls;
-          devShells.default = haskellPackages.shellFor
+          devShells.default = pkgs.haskellPackages.shellFor
             {
               packages = p: [ packages.github-ls ];
-              buildInputs = with pkgs; with haskellPackages; [
+              buildInputs = with pkgs; with pkgs.haskellPackages; [
                 haskell-language-server
                 cabal-install
                 ghcid
@@ -51,6 +50,20 @@
                 implicit-hie
               ];
             };
-        }
-      );
+
+          overlays = final: prev:
+            {
+              haskellPackages = prev.haskellPackages.override (old:
+                {
+                  overrides = final.lib.composeExtensions (old.overrides or (_: _: { }))
+                    (self: super:
+                      {
+                        autodocodec-yaml = final.haskell.lib.unmarkBroken super.autodocodec-yaml;
+                        github-ls = self.callCabal2nix "github-ls" ./. { };
+                      }
+                    );
+                });
+            };
+        });
 }
+

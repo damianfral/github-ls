@@ -19,17 +19,13 @@ library
   hs-source-dirs:
       ./src/
   build-depends:
-      aeson
-    , base
+      base
     , bytestring
     , github
-    , lens
     , optparse-applicative
     , optparse-generic
     , relude
     , text
-    , time
-    , transformers
     , turtle
     , vector
   default-language: Haskell2010
@@ -43,17 +39,42 @@ executable github-ls
       ./src/
   ghc-options: -rtsopts -threaded -with-rtsopts=-N
   build-depends:
-      aeson
-    , base
+      base
     , bytestring
     , github
-    , lens
     , optparse-applicative
     , optparse-generic
     , relude
     , text
-    , time
-    , transformers
     , turtle
+    , vector
+  default-language: Haskell2010
+
+test-suite github-ls-test
+  type: exitcode-stdio-1.0
+  main-is: Spec.hs
+  other-modules:
+      GitHub.CLISpec
+      Paths_github_ls
+  hs-source-dirs:
+      test
+  ghc-options: -threaded
+  build-depends:
+      QuickCheck
+    , base
+    , bytestring
+    , genvalidity
+    , genvalidity-sydtest
+    , genvalidity-text
+    , github
+    , github-ls
+    , optparse-applicative
+    , optparse-generic
+    , relude
+    , sydtest
+    , sydtest-discover
+    , text
+    , turtle
+    , validity
     , vector
   default-language: Haskell2010

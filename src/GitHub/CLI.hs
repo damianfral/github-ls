@@ -19,7 +19,7 @@ import qualified Turtle
 
 --------------------------------------------------------------------------------
 
-data Access = Public | Private deriving (Show, Read, Typeable, Generic)
+data Access = Public | Private deriving (Show, Read, Typeable, Generic, Eq)
 
 instance ParseField Access where
   readField = do
@@ -38,7 +38,7 @@ data Display
   | URL
   | SSH
   | Git
-  deriving (Show, Read, Typeable, Generic)
+  deriving (Show, Read, Typeable, Generic, Eq)
 
 instance ParseField Display where
   readField = do
@@ -55,14 +55,22 @@ instance ParseRecord Display
 --------------------------------------------------------------------------------
 
 newtype Organization = Organization Text
-  deriving (Show, Read, Typeable, Generic)
+  deriving (Show, Read, Typeable, Generic, Eq)
 
-instance ParseField Organization
+unOrganization (Organization o) = o
+
+instance ParseField Organization where
+  metavar _ = "ORGANIZATION"
+  parseField a b c d = Organization <$> parseField a b c d
 
 newtype Language = Language Text
-  deriving (Show, Read, Typeable, Generic)
+  deriving (Show, Read, Typeable, Generic, Eq)
 
-instance ParseField Language
+unLanguage (Language l) = l
+
+instance ParseField Language where
+  metavar _ = "LANGUAGE"
+  parseField a b c d = Language <$> parseField a b c d
 
 --------------------------------------------------------------------------------
 

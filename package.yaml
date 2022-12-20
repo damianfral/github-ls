@@ -27,3 +27,19 @@ executables:
       - -rtsopts
       - -threaded
       - -with-rtsopts=-N
+
+tests:
+  github-ls-test:
+    main: Spec.hs
+    source-dirs: test
+    ghc-options:
+    - -threaded
+    dependencies:
+    - genvalidity
+    - genvalidity-sydtest
+    - genvalidity-text
+    - github-ls
+    - QuickCheck
+    - sydtest
+    - sydtest-discover
+    - validity
