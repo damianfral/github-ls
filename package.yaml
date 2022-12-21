@@ -15,6 +15,7 @@ dependencies:
   - text
   - turtle
   - vector
+  - vector-algorithms
 
 library:
   source-dirs: ./src/

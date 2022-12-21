@@ -28,6 +28,7 @@ library
     , text
     , turtle
     , vector
+    , vector-algorithms
   default-language: Haskell2010
 
 executable github-ls
@@ -48,6 +49,7 @@ executable github-ls
     , text
     , turtle
     , vector
+    , vector-algorithms
   default-language: Haskell2010
 
 test-suite github-ls-test
@@ -77,4 +79,5 @@ test-suite github-ls-test
     , turtle
     , validity
     , vector
+    , vector-algorithms
   default-language: Haskell2010

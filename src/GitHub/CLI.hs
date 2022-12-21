@@ -1,5 +1,6 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TypeOperators #-}
@@ -10,11 +11,12 @@ module GitHub.CLI where
 import Data.Text (pack, replace, toLower)
 import qualified Data.Text.IO as T
 import qualified Data.Vector as V
+import qualified Data.Vector.Algorithms.Merge as V
 import GHC.Read (Read (readPrec), lexP)
 import qualified GitHub as G
 import Options.Applicative.Types
 import Options.Generic
-import Relude
+import Relude hiding (sort)
 import qualified Turtle
 
 --------------------------------------------------------------------------------
@@ -28,8 +30,6 @@ instance ParseField Access where
       "public" -> pure Public
       "private" -> pure Private
       _ -> fail "could not parse Access"
-
-instance ParseRecord Access
 
 --------------------------------------------------------------------------------
 
@@ -49,8 +49,6 @@ instance ParseField Display where
       "ssh" -> pure SSH
       "git" -> pure Git
       _ -> fail "could not parse Display"
-
-instance ParseRecord Display
 
 --------------------------------------------------------------------------------
 
@@ -76,6 +74,23 @@ instance ParseField Language where
 
 --------------------------------------------------------------------------------
 
+data Sorting = ByName | ByUpdate | ByAge
+  deriving (Show, Read, Typeable, Generic, Eq)
+
+instance ParseField Sorting where
+  readField = do
+    str <- readerAsk
+    case toLower $ pack str of
+      "name" -> pure ByName
+      "update" -> pure ByUpdate
+      "updated" -> pure ByUpdate
+      "age" -> pure ByAge
+      "create" -> pure ByAge
+      "created" -> pure ByAge
+      _ -> fail "could not parse Sorting"
+
+--------------------------------------------------------------------------------
+
 data Options = Options
   { org ::
       Maybe Organization <?> "Print only repos owned by this organization",
@@ -86,7 +101,8 @@ data Options = Options
     lang ::
       Maybe Language <?> "Print only repos matching this language",
     archived ::
-      Bool <?> "Print also archived repos"
+      Bool <?> "Print also archived repos",
+    sort :: Maybe Sorting <?> "Sort by (name|update|age)"
   }
   deriving (Show, Typeable, Generic)
 
@@ -133,29 +149,6 @@ displayRepo _ =
 
 --------------------------------------------------------------------------------
 
-runOptions :: Options -> G.Auth -> IO ()
-runOptions options auth = do
-  listAllRepos auth >>= \case
-    Left e -> log $ show e
-    Right repos -> do
-      let filteredRepos = V.filter (getAll . filters) repos
-      let render = displayRepo $ fromMaybe Name displayValue
-      mapM_ (T.putStrLn . render) filteredRepos
-  where
-    filters =
-      mconcat $
-        catMaybes
-          [ byOrg <$> orgValue,
-            byAccess <$> accessValue,
-            byLang <$> langValue
-          ]
-          <> [excludeArchived | not archivedValue]
-    orgValue = unHelpful $ org options
-    displayValue = unHelpful $ display options
-    accessValue = unHelpful $ access options
-    langValue = unHelpful $ lang options
-    archivedValue = unHelpful $ archived options
-
 byOrg :: Organization -> G.Repo -> All
 byOrg (Organization o) repo = All $ ((==) `on` toLower) repoOwnerText o
   where
@@ -173,6 +166,41 @@ byLang (Language languageText) repo = All $ Just fLanguage == rLanguage
 
 excludeArchived :: G.Repo -> All
 excludeArchived = All . not . G.repoArchived
+
+--------------------------------------------------------------------------------
+
+sortRepos ByName = V.sortBy (compare `on` displayRepo Name)
+sortRepos ByAge = V.sortBy (compare `on` G.repoCreatedAt)
+sortRepos ByUpdate = V.sortBy (compare `on` G.repoUpdatedAt)
+
+--------------------------------------------------------------------------------
+
+runOptions :: Options -> G.Auth -> IO ()
+runOptions options auth = do
+  listAllRepos auth >>= \case
+    Left e -> log $ show e
+    Right repos -> do
+      let filteredRepos = V.filter (getAll . filters) repos
+      let render = displayRepo $ fromMaybe Name displayValue
+      let sortedRepos = case sortingValue of
+            Nothing -> filteredRepos
+            Just s -> V.modify (sortRepos s) filteredRepos
+      mapM_ (T.putStrLn . render) sortedRepos
+  where
+    filters =
+      mconcat $
+        catMaybes
+          [ byOrg <$> orgValue,
+            byAccess <$> accessValue,
+            byLang <$> langValue
+          ]
+          <> [excludeArchived | not archivedValue]
+    orgValue = unHelpful $ org options
+    displayValue = unHelpful $ display options
+    accessValue = unHelpful $ access options
+    langValue = unHelpful $ lang options
+    archivedValue = unHelpful $ archived options
+    sortingValue = unHelpful $ sort options
 
 runCLI = do
   options <- getRecord "github-ls - List your github repositories"
