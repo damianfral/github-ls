@@ -1,8 +1,10 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 
@@ -12,7 +14,6 @@ import Data.Text (pack, replace, toLower)
 import qualified Data.Text.IO as T
 import qualified Data.Vector as V
 import qualified Data.Vector.Algorithms.Merge as V
-import GHC.Read (Read (readPrec), lexP)
 import qualified GitHub as G
 import Options.Applicative.Types
 import Options.Generic
@@ -91,22 +92,21 @@ instance ParseField Sorting where
 
 --------------------------------------------------------------------------------
 
-data Options = Options
-  { org ::
-      Maybe Organization <?> "Print only repos owned by this organization",
-    access ::
-      Maybe Access <?> "Print only repos with this access (public|private)",
-    display ::
-      Maybe Display <?> "Print field (name|url|ssh|git)",
-    lang ::
-      Maybe Language <?> "Print only repos matching this language",
-    archived ::
-      Bool <?> "Print also archived repos",
-    sort :: Maybe Sorting <?> "Sort by (name|update|age)"
+data Options w = Options
+  { org :: w ::: Maybe Organization <?> "Print only repos owned by this organization",
+    access :: w ::: Maybe Access <?> "Print only (public|private) repos",
+    display :: w ::: Maybe Display <?> "Print field (name|url|ssh|git)",
+    lang :: w ::: Maybe Language <?> "Print only repos matching this language",
+    archived :: w ::: Bool <?> "Print also archived repos",
+    sort :: w ::: Maybe Sorting <?> "Sort by (name|update|age)"
   }
-  deriving (Show, Typeable, Generic)
+  deriving (Generic)
 
-instance ParseRecord Options
+instance ParseRecord (Options Wrapped)
+
+deriving instance Show (Options Unwrapped)
+
+deriving instance Eq (Options Unwrapped)
 
 --------------------------------------------------------------------------------
 
@@ -175,7 +175,7 @@ sortRepos ByUpdate = V.sortBy (compare `on` G.repoUpdatedAt)
 
 --------------------------------------------------------------------------------
 
-runOptions :: Options -> G.Auth -> IO ()
+runOptions :: Options Unwrapped -> G.Auth -> IO ()
 runOptions options auth = do
   listAllRepos auth >>= \case
     Left e -> log $ show e
@@ -195,15 +195,15 @@ runOptions options auth = do
             byLang <$> langValue
           ]
           <> [excludeArchived | not archivedValue]
-    orgValue = unHelpful $ org options
-    displayValue = unHelpful $ display options
-    accessValue = unHelpful $ access options
-    langValue = unHelpful $ lang options
-    archivedValue = unHelpful $ archived options
-    sortingValue = unHelpful $ sort options
+    orgValue = org options
+    displayValue = display options
+    accessValue = access options
+    langValue = lang options
+    archivedValue = archived options
+    sortingValue = sort options
 
 runCLI = do
-  options <- getRecord "github-ls - List your github repositories"
+  options <- unwrapRecord "github-ls - List your github repositories"
   token <- runMaybeT $ MaybeT getAuthToken <|> MaybeT (login >> getAuthToken)
   case token of
     Nothing -> log "No auth"
