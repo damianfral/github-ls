@@ -4,6 +4,7 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE NoImplicitPrelude #-}
@@ -129,8 +130,7 @@ getAuthToken = do
 listAllOrganizations auth = G.github auth $ G.organizationsR G.FetchAll
 
 listAllRepos auth =
-  G.github auth $
-    G.currentUserReposR G.RepoPublicityAll G.FetchAll
+  G.github auth $ G.currentUserReposR G.RepoPublicityAll G.FetchAll
 
 --------------------------------------------------------------------------------
 
@@ -169,38 +169,34 @@ excludeArchived = All . not . G.repoArchived
 
 --------------------------------------------------------------------------------
 
-sortRepos ByName = V.sortBy (compare `on` displayRepo Name)
-sortRepos ByAge = V.sortBy (compare `on` G.repoCreatedAt)
-sortRepos ByUpdate = V.sortBy (compare `on` G.repoUpdatedAt)
+sortReposBy ByName = V.sortBy (compare `on` displayRepo Name)
+sortReposBy ByAge = V.sortBy (compare `on` G.repoCreatedAt)
+sortReposBy ByUpdate = V.sortBy (compare `on` G.repoUpdatedAt)
 
 --------------------------------------------------------------------------------
 
 runOptions :: Options Unwrapped -> G.Auth -> IO ()
-runOptions options auth = do
+runOptions Options {..} auth = do
   listAllRepos auth >>= \case
     Left e -> log $ show e
     Right repos -> do
       let filteredRepos = V.filter (getAll . filters) repos
-      let render = displayRepo $ fromMaybe Name displayValue
-      let sortedRepos = case sortingValue of
-            Nothing -> filteredRepos
-            Just s -> V.modify (sortRepos s) filteredRepos
+      let render = displayRepo $ fromMaybe Name display
+      let sortedRepos = sortRepos filteredRepos
       mapM_ (T.putStrLn . render) sortedRepos
   where
     filters =
       mconcat $
         catMaybes
-          [ byOrg <$> orgValue,
-            byAccess <$> accessValue,
-            byLang <$> langValue
+          [ byOrg <$> org,
+            byAccess <$> access,
+            byLang <$> lang
           ]
-          <> [excludeArchived | not archivedValue]
-    orgValue = org options
-    displayValue = display options
-    accessValue = access options
-    langValue = lang options
-    archivedValue = archived options
-    sortingValue = sort options
+          <> [excludeArchived | not archived]
+    sortRepos repos =
+      case sort of
+        Nothing -> repos
+        Just s -> V.modify (sortReposBy s) repos
 
 runCLI = do
   options <- unwrapRecord "github-ls - List your github repositories"

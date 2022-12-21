@@ -26,44 +26,39 @@
         in
         rec {
           packages = {
-            github-ls = pkgs.haskellPackages.github-ls.overrideAttrs
-              (oldAttrs:
-                {
-                  nativeBuildInputs = oldAttrs.nativeBuildInputs ++ [ pkgs.makeWrapper ];
-                  postInstall = ''
-                    wrapProgram $out/bin/github-ls --suffix PATH : ${pkgs.lib.makeBinPath [ pkgs.github-cli ]}
-                  '';
-                }
-              );
+            github-ls = pkgs.haskellPackages.github-ls.overrideAttrs (oldAttrs: {
+              nativeBuildInputs = oldAttrs.nativeBuildInputs ++ [ pkgs.makeWrapper ];
+              postInstall = ''
+                wrapProgram $out/bin/github-ls \
+                  --suffix PATH : ${pkgs.lib.makeBinPath [ pkgs.github-cli ]}
+              '';
+            }
+            );
           };
 
           defaultPackage = packages.github-ls;
-          devShells.default = pkgs.haskellPackages.shellFor
-            {
-              packages = p: [ packages.github-ls ];
-              buildInputs = with pkgs; with pkgs.haskellPackages; [
-                haskell-language-server
-                cabal-install
-                ghcid
-                hpack
-                yamlfix
-                implicit-hie
-              ];
-            };
 
-          overlays = final: prev:
-            {
-              haskellPackages = prev.haskellPackages.override (old:
-                {
-                  overrides = final.lib.composeExtensions (old.overrides or (_: _: { }))
-                    (self: super:
-                      {
-                        autodocodec-yaml = final.haskell.lib.unmarkBroken super.autodocodec-yaml;
-                        github-ls = self.callCabal2nix "github-ls" ./. { };
-                      }
-                    );
-                });
-            };
+          devShells.default = pkgs.haskellPackages.shellFor {
+            packages = p: [ packages.github-ls ];
+            buildInputs = with pkgs; with pkgs.haskellPackages; [
+              haskell-language-server
+              cabal-install
+              ghcid
+              hpack
+              yamlfix
+            ];
+          };
+
+          overlays = final: prev: {
+            haskellPackages = prev.haskellPackages.override (old: {
+              overrides = final.lib.composeExtensions (old.overrides or (_: _: { }))
+                (self: super: {
+                  autodocodec-yaml = final.haskell.lib.unmarkBroken super.autodocodec-yaml;
+                  github-ls = self.callCabal2nix "github-ls" ./. { };
+                }
+                );
+            });
+          };
         });
 }
 
