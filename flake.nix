@@ -56,6 +56,7 @@
                 (self: super: {
                   autodocodec-yaml = final.haskell.lib.unmarkBroken super.autodocodec-yaml;
                   github-ls = self.callCabal2nix "github-ls" ./. { };
+                  sydtest = with final.haskell.lib; unmarkBroken (dontCheck super.sydtest);
                 }
                 );
             });
