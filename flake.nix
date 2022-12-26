@@ -36,7 +36,8 @@
             );
           };
 
-          defaultPackage = packages.github-ls;
+          defaultPackage = pkgs.haskell.lib.justStaticExecutables
+            packages.github-ls;
 
           devShells.default = pkgs.haskellPackages.shellFor {
             packages = p: [ packages.github-ls ];
