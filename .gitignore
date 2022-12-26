@@ -1,19 +1,69 @@
-.DS_Store
-.merlin
-.bsb.lock
-npm-debug.log
-/client/lib/bs/*
-/client/build/*
-node_modules
-bundleOutput
-dist
-dist-newstyle
-.cache
-*.bs.js
-*.cmi
-*.cmj
-*.cmt
+result
+# Created by https://www.toptal.com/developers/gitignore/api/vim,linux,direnv,haskell
+# Edit at https://www.toptal.com/developers/gitignore?templates=vim,linux,direnv,haskell
 
-#sqlite
-state.nixops-shm
-state.nixops-wal
+### direnv ###
+.direnv
+.envrc
+
+### Haskell ###
+dist
+dist-*
+cabal-dev
+*.o
+*.hi
+*.hie
+*.chi
+*.chs.h
+*.dyn_o
+*.dyn_hi
+.hpc
+.hsenv
+.cabal-sandbox/
+cabal.sandbox.config
+*.prof
+*.aux
+*.hp
+*.eventlog
+.stack-work/
+cabal.project.local
+cabal.project.local~
+.HTF/
+.ghc.environment.*
+
+### Linux ###
+*~
+
+# temporary files which can be created if a process still has a handle open of a deleted file
+.fuse_hidden*
+
+# KDE directory preferences
+.directory
+
+# Linux trash folder which might appear on any partition or disk
+.Trash-*
+
+# .nfs files are created when an open file is removed but is still being accessed
+.nfs*
+
+### Vim ###
+# Swap
+[._]*.s[a-v][a-z]
+!*.svg  # comment out if you don't need vector files
+[._]*.sw[a-p]
+[._]s[a-rt-v][a-z]
+[._]ss[a-gi-z]
+[._]sw[a-p]
+
+# Session
+Session.vim
+Sessionx.vim
+
+# Temporary
+.netrwhist
+# Auto-generated tag files
+tags
+# Persistent undo
+[._]*.un~
+
+# End of https://www.toptal.com/developers/gitignore/api/vim,linux,direnv,haskell
