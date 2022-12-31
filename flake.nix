@@ -4,10 +4,11 @@
   inputs = {
     nixpkgs = { url = "github:NixOS/nixpkgs/"; };
     flake-utils = { url = "github:numtide/flake-utils"; };
+    nix-filter.url = "github:numtide/nix-filter";
     safe-coloured-text.url = "github:NorfairKing/safe-coloured-text?ref=flake";
   };
 
-  outputs = { self, nixpkgs, flake-utils, safe-coloured-text, ... }@inputs:
+  outputs = { self, nixpkgs, flake-utils, safe-coloured-text, nix-filter, ... }:
 
     let
       pkgsFor = system: import nixpkgs {
@@ -15,12 +16,24 @@
         overlays = [
           self.overlays.${system}
           safe-coloured-text.overlays.${system}
+          nix-filter.overlays.default
         ];
       };
     in
 
     flake-utils.lib.eachDefaultSystem (system:
-      let pkgs = pkgsFor system;
+      let
+        pkgs = pkgsFor system;
+        filteredSrc =
+          pkgs.nix-filter {
+            root = ./.;
+            include = [
+              "src/"
+              "test/"
+              "package.yaml"
+              "LICENSE"
+            ];
+          };
       in
       rec {
         packages = {
@@ -59,7 +72,7 @@
                 autodocodec-yaml = unmarkBroken super.autodocodec-yaml;
                 github-ls = self.generateOptparseApplicativeCompletions
                   [ "github-ls" ]
-                  (self.callCabal2nix "github-ls" ./. { });
+                  (self.callCabal2nix "github-ls" filteredSrc { });
                 sydtest = unmarkBroken (dontCheck super.sydtest);
               }
               );
