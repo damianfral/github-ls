@@ -74,6 +74,7 @@
                   [ "github-ls" ]
                   (self.callCabal2nix "github-ls" filteredSrc { });
                 sydtest = unmarkBroken (dontCheck super.sydtest);
+                safe-coloured-text = self.callCabal2nix "safe-coloured-text" safe-coloured-text { };
               }
               );
           });
