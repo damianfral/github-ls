@@ -202,5 +202,5 @@ runCLI = do
   options <- unwrapRecord "github-ls - List your github repositories"
   token <- runMaybeT $ MaybeT getAuthToken <|> MaybeT (login >> getAuthToken)
   case token of
-    Nothing -> log "No auth"
-    Just auth -> runOptions options auth
+    Nothing -> log "No auth" >> exitFailure
+    Just auth -> runOptions options auth >> exitSuccess
