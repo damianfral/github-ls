@@ -20,6 +20,8 @@ import Options.Applicative.Types
 import Options.Generic
 import Relude hiding (sort)
 import qualified Turtle
+import Data.Version (showVersion)
+import Paths_github_ls
 
 --------------------------------------------------------------------------------
 
@@ -199,7 +201,13 @@ runOptions Options {..} auth = do
         Just s -> V.modify (sortReposBy s) repos
 
 runCLI = do
-  options <- unwrapRecord "github-ls - List your github repositories"
+  options <-
+    unwrapRecord $
+      unwords
+        [ "github-ls",
+          "v" <> pack (showVersion version),
+          " List your github repositories"
+        ]
   token <- runMaybeT $ MaybeT getAuthToken <|> MaybeT (login >> getAuthToken)
   case token of
     Nothing -> log "No auth" >> exitFailure
