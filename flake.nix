@@ -2,82 +2,119 @@
   description = "CLI tool to list your repositories";
 
   inputs = {
-    nixpkgs = { url = "github:NixOS/nixpkgs/"; };
-    flake-utils = { url = "github:numtide/flake-utils"; };
+    nixpkgs.url = "github:NixOS/nixpkgs";
+    flake-utils.url = "github:numtide/flake-utils";
     nix-filter.url = "github:numtide/nix-filter";
-    safe-coloured-text.url = "github:NorfairKing/safe-coloured-text?ref=flake";
+    pre-commit-hooks.url = "github:cachix/pre-commit-hooks.nix";
+    pre-commit-hooks.inputs.nixpkgs.follows = "nixpkgs";
   };
 
-  outputs = { self, nixpkgs, flake-utils, safe-coloured-text, nix-filter, ... }:
+  outputs =
+    { self
+    , nixpkgs
+    , flake-utils
+    , nix-filter
+    , pre-commit-hooks
+    , ...
+    }:
 
     let
       pkgsFor = system: import nixpkgs {
         inherit system;
         overlays = [
-          self.overlays.${system}
-          safe-coloured-text.overlays.${system}
+          self.overlays.default
           nix-filter.overlays.default
         ];
       };
     in
-
-    flake-utils.lib.eachDefaultSystem (system:
-      let
-        pkgs = pkgsFor system;
-        filteredSrc =
-          pkgs.nix-filter {
-            root = ./.;
-            include = [
-              "src/"
-              "test/"
-              "package.yaml"
-              "LICENSE"
-            ];
-          };
-      in
-      rec {
-        packages = {
-          github-ls =
-            pkgs.haskell.lib.justStaticExecutables (
-              pkgs.haskellPackages.github-ls.overrideAttrs
-                (oldAttrs: {
-                  nativeBuildInputs = oldAttrs.nativeBuildInputs
-                    ++ [ pkgs.makeWrapper ];
-                  postInstall = (oldAttrs.postInstall or "") + ''
-                    wrapProgram $out/bin/github-ls \
-                      --suffix PATH : ${pkgs.lib.makeBinPath [pkgs.github-cli]}
-                  '';
+    {
+      overlays.default = final: prev:
+        let
+          filteredSrc =
+            final.nix-filter {
+              root = ./.;
+              include = [
+                "src/"
+                "test/"
+                "package.yaml"
+                "LICENSE"
+              ];
+            };
+        in
+        with final.haskell.lib;
+        {
+          haskellPackages = prev.haskellPackages.override
+            (old: {
+              overrides = final.lib.composeExtensions
+                (old.overrides or (_: _: { }))
+                (self: super: {
+                  sydtest = unmarkBroken (dontCheck super.sydtest);
+                  github-ls = self.generateOptparseApplicativeCompletions
+                    [ "github-ls" ]
+                    ((self.callCabal2nix "github-ls" filteredSrc { }).overrideAttrs
+                      (oldAttrs: {
+                        nativeBuildInputs = oldAttrs.nativeBuildInputs
+                        ++ [ final.makeWrapper ];
+                        postInstall = (oldAttrs.postInstall or "") + ''
+                          wrapProgram $out/bin/github-ls \
+                            --suffix PATH : ${final.lib.makeBinPath [final.github-cli] }
+                        '';
+                      }
+                      )
+                    );
                 }
-                ));
+                );
+            });
+        }
+      ;
+    } //
+    flake-utils.lib.eachDefaultSystem (system:
+    let
+      pkgs = pkgsFor system;
+      precommitCheck = pre-commit-hooks.lib.${system}.run {
+        src = ./.;
+        hooks = {
+          actionlint.enable = true;
+          hlint.enable = true;
+          hpack.enable = true;
+          markdownlint.enable = true;
+          nil.enable = true;
+          nixpkgs-fmt.enable = true;
+          ormolu.enable = true;
+          statix.enable = true;
         };
+      };
+    in
+    rec {
+      packages = {
+        inherit (pkgs.haskellPackages) github-ls;
+        default = packages.github-ls;
+      };
 
-        defaultPackage = packages.github-ls;
-
-        devShells.default = pkgs.haskellPackages.shellFor {
-          packages = p: [ packages.github-ls ];
-          buildInputs = with pkgs; with pkgs.haskellPackages; [
-            haskell-language-server
-            cabal-install
-            ghcid
-            hpack
-            hlint
-          ];
+      apps = {
+        github-ls = flake-utils.lib.mkApp {
+          drv = pkgs.haskell.lib.justStaticExecutables packages.github-ls;
         };
+        default = apps.github-ls;
+      };
 
-        overlays = final: prev: with final.haskell.lib; {
-          haskellPackages = prev.haskellPackages.override (old: {
-            overrides = final.lib.composeExtensions (old.overrides or (_: _: { }))
-              (self: super: {
-                autodocodec-yaml = unmarkBroken super.autodocodec-yaml;
-                github-ls = self.generateOptparseApplicativeCompletions
-                  [ "github-ls" ]
-                  (self.callCabal2nix "github-ls" filteredSrc { });
-                sydtest = unmarkBroken (dontCheck super.sydtest);
-                safe-coloured-text = self.callCabal2nix "safe-coloured-text" safe-coloured-text { };
-              }
-              );
-          });
-        };
-      });
+
+      devShells.default = pkgs.haskellPackages.shellFor {
+        packages = p: [ packages.github-ls ];
+        buildInputs = with pkgs; with pkgs.haskellPackages; [
+          actionlint
+          cabal-install
+          ghcid
+          haskell-language-server
+          hlint
+          nil
+          nixpkgs-fmt
+          ormolu
+          statix
+        ];
+        inherit (precommitCheck) shellHook;
+      };
+    }
+    );
 }
 
