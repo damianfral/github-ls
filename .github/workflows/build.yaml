@@ -1,15 +1,21 @@
-name: "build"
+name: build
 on: push
+#
 jobs:
-  build:
+  build-package:
     runs-on: ubuntu-latest
     steps:
       - name: checkout
         uses: actions/checkout@v3
       - name: install nix
         uses: cachix/install-nix-action@v18
-        with:
-          extra_nix_config: |
-            sandbox = false
-      - name: nix build
-        run: nix build --allow-import-from-derivation
+      - run: nix build
+
+  build-dev-shell:
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v3
+      - name: install nix
+        uses: cachix/install-nix-action@v18
+      - run: nix build .#devShells.x86_64-linux.default
