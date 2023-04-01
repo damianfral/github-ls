@@ -60,7 +60,7 @@ test-suite github-ls-test
       Paths_github_ls
   hs-source-dirs:
       test
-  ghc-options: -threaded
+  ghc-options: -rtsopts -threaded -with-rtsopts=-N
   build-depends:
       QuickCheck
     , base
