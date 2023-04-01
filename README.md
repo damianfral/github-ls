@@ -1,18 +1,16 @@
-<!-- ABOUT THE PROJECT -->
-## github-ls
+# github-ls
 
 A simple tool that uses the GitHub API to list your repositories.
 
-
-### Run
+## Run
 
 ```shell
 nix run github:damianfral/github-ls
 ```
 
-#### Options
+### Options
 
-```
+```text
 github-ls - List your github repositories
 
 Usage: github-ls [--org TEXT] [--access ACCESS] [--display DISPLAY] 

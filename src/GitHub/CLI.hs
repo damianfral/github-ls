@@ -15,13 +15,13 @@ import Data.Text (pack, replace, toLower)
 import qualified Data.Text.IO as T
 import qualified Data.Vector as V
 import qualified Data.Vector.Algorithms.Merge as V
+import Data.Version (showVersion)
 import qualified GitHub as G
 import Options.Applicative.Types
 import Options.Generic
+import Paths_github_ls
 import Relude hiding (sort)
 import qualified Turtle
-import Data.Version (showVersion)
-import Paths_github_ls
 
 --------------------------------------------------------------------------------
 
