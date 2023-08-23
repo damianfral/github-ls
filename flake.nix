@@ -41,14 +41,12 @@
               ];
             };
         in
-        with final.haskell.lib;
         {
           haskellPackages = prev.haskellPackages.override
             (old: {
               overrides = final.lib.composeExtensions
                 (old.overrides or (_: _: { }))
                 (self: super: {
-                  sydtest = unmarkBroken (dontCheck super.sydtest);
                   github-ls = self.generateOptparseApplicativeCompletions
                     [ "github-ls" ]
                     ((self.callCabal2nix "github-ls" filteredSrc { }).overrideAttrs
