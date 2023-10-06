@@ -21,17 +21,14 @@
     let
       pkgsFor = system: import nixpkgs {
         inherit system;
-        overlays = [
-          self.overlays.default
-          nix-filter.overlays.default
-        ];
+        overlays = [ self.overlays.default ];
       };
     in
     {
       overlays.default = final: prev:
         let
           filteredSrc =
-            final.nix-filter {
+            nix-filter.lib {
               root = ./.;
               include = [
                 "src/"
