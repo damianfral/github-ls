@@ -38,7 +38,8 @@
               ];
             };
         in
-        {
+        rec {
+          github-ls = final.haskell.lib.justStaticExecutables haskellPackages.github-ls;
           haskellPackages = prev.haskellPackages.override
             (old: {
               overrides = final.lib.composeExtensions
@@ -82,14 +83,12 @@
     in
     rec {
       packages = {
-        inherit (pkgs.haskellPackages) github-ls;
+        inherit (pkgs) github-ls;
         default = packages.github-ls;
       };
 
       apps = {
-        github-ls = flake-utils.lib.mkApp {
-          drv = pkgs.haskell.lib.justStaticExecutables packages.github-ls;
-        };
+        github-ls = flake-utils.lib.mkApp { drv = packages.github-ls; };
         default = apps.github-ls;
       };
 
