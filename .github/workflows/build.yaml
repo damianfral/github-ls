@@ -6,10 +6,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@main
       - name: install nix
-        uses: cachix/install-nix-action@v20
-      - uses: cachix/cachix-action@v12
+        uses: cachix/install-nix-action@master
+      - uses: cachix/cachix-action@master
         with:
           name: opensource
           authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
@@ -19,10 +19,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@main
       - name: install nix
-        uses: cachix/install-nix-action@v20
-      - uses: cachix/cachix-action@v12
+        uses: cachix/install-nix-action@master
+      - uses: cachix/cachix-action@master
         with:
           name: opensource
           authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
