@@ -129,7 +129,8 @@
         "flake-utils": "flake-utils",
         "nix-filter": "nix-filter",
         "nixpkgs": "nixpkgs",
-        "pre-commit-hooks": "pre-commit-hooks"
+        "pre-commit-hooks": "pre-commit-hooks",
+        "weeder-nix": "weeder-nix"
       }
     },
     "systems": {
@@ -144,6 +145,29 @@
       "original": {
         "owner": "nix-systems",
         "repo": "default",
+        "type": "github"
+      }
+    },
+    "weeder-nix": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ],
+        "pre-commit-hooks": [
+          "pre-commit-hooks"
+        ]
+      },
+      "locked": {
+        "lastModified": 1712652513,
+        "narHash": "sha256-etbllbKKJNVHogT89VkgevuaSLa0SA24OGpSDKTrGX0=",
+        "owner": "NorfairKing",
+        "repo": "weeder-nix",
+        "rev": "d49eebf716fd512d5e521bfed49c3281ca12dc1c",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NorfairKing",
+        "repo": "weeder-nix",
         "type": "github"
       }
     }

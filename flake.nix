@@ -7,6 +7,11 @@
     nix-filter.url = "github:numtide/nix-filter";
     pre-commit-hooks.url = "github:cachix/pre-commit-hooks.nix";
     pre-commit-hooks.inputs.nixpkgs.follows = "nixpkgs";
+    weeder-nix.url = "github:NorfairKing/weeder-nix";
+    weeder-nix.inputs = {
+      nixpkgs.follows = "nixpkgs";
+      pre-commit-hooks.follows = "pre-commit-hooks";
+    };
   };
 
   outputs =
@@ -16,7 +21,7 @@
     , nix-filter
     , pre-commit-hooks
     , ...
-    }:
+    } @ inputs:
 
     let
       pkgsFor = system: import nixpkgs {
@@ -77,7 +82,6 @@
           nil.enable = true;
           nixpkgs-fmt.enable = true;
           ormolu.enable = true;
-          statix.enable = true;
         };
       };
     in
@@ -92,6 +96,14 @@
         default = apps.github-ls;
       };
 
+      checks = {
+        pre-commit-check = precommitCheck;
+        weeder-check = inputs.weeder-nix.lib.${system}.makeWeederCheck {
+          haskellPackages = pkgs.haskellPackages;
+          packages = [ "github-ls" ];
+          reportOnly = true;
+        };
+      };
 
       devShells.default = pkgs.haskellPackages.shellFor {
         packages = p: [ packages.github-ls ];
