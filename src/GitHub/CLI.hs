@@ -188,13 +188,13 @@ runOptions Options {..} auth = do
       mapM_ (T.putStrLn . render) sortedRepos
   where
     filters =
-      mconcat $
-        catMaybes
+      mconcat
+        $ catMaybes
           [ byOrg <$> org,
             byAccess <$> access,
             byLang <$> lang
           ]
-          <> [excludeArchived | not archived]
+        <> [excludeArchived | not archived]
     sortRepos repos =
       case sort of
         Nothing -> repos
@@ -202,8 +202,8 @@ runOptions Options {..} auth = do
 
 runCLI = do
   options <-
-    unwrapRecord $
-      unwords
+    unwrapRecord
+      $ unwords
         [ "github-ls",
           "v" <> pack (showVersion version),
           " List your github repositories"
